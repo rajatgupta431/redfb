@@ -1,0 +1,74 @@
+<head> <meta charset="utf-8">
+<link  rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"/>
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10-dev/css/jquery.dataTables.css">
+
+<script type="text/javascript" language="javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" language="javascript" src="//cdn.datatables.net/1.10-dev/js/jquery.dataTables.js"></script>
+<script>$(document).ready( function () {
+	$('table').DataTable();
+} );
+</script>
+<style>body {
+	font: 100%/1.45em "Helvetica Neue", HelveticaNeue, Verdana, Arial, Helvetica, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #333;
+	background-color: #fff;
+}
+
+
+div.container {
+	min-width: 980px;
+	margin: 0 auto;
+}
+</style>
+</head>
+
+<body>
+	<div id="fb-root"></div>
+<script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=491359790986749";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>
+
+<% if (user==null){%>
+        <h2>Welcome! Please log in.</h2>
+       
+<a href="/auth/facebook"><img src="/images/login-with-facebook.png" width="154" height="22"></a> 
+        	<%}%>
+
+<% if (user!=null){%>
+	<h1 style="color:blue">Hi <%=user.name.givenName%></h1>
+	<h2>Search a new Subreddit</h3>
+	<form method= "POST" action='/subreddit'>
+	<input type="text" name="subreddit">
+	<button type="submit" >Search</button>
+	</form>
+	<% if (hits[0]!=null){%>
+		
+	<legend>Your Stats</legend>
+	<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Title</th>  
+            <th>URL</th>  
+           <th>Page Name</th>  
+           <th>Date</th>  
+          </tr>  
+        </thead>  
+	
+		<%for (var i=hits.length-1; i>=0; i--){%>
+         
+<tr><td><p style="color:red"><b><%=hits[i].title%></p></td><td> <p><b><%=hits[i].url%></p></td><td><a href="/stats?name=<%=hits[i].page_name%>"><%=hits[i].page_name%></a></td><td><%=hits[i].date%></td></tr>
+
+<%}%>
+</table>
+		
+	<%}%>	
+	<%}%>
+
+</body>
+</html>

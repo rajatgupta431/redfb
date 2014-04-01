@@ -1,0 +1,39 @@
+<head> <meta charset="utf-8">
+<link  rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"/>
+
+</head>
+<body>
+	<legend>TOP Results from Reddit </legend>
+	<h2>Search Another:</h3>
+	<form method= "POST" action='/subreddit'>
+	<input type="text" name="subreddit">
+	<button type="submit" >Search</button>
+	</form>
+	<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Title</th>  
+            <th>URL</th>  
+            <th>Ups</th>
+           <th>Action</th>  
+          </tr>  
+        </thead>  
+<%if(subreddits) {%>
+	
+
+<%for (var i=0;i<subreddits.length; i++){%>
+         
+<tr><td><p style="color:red"><b><%=subreddits[i].data.title%></p></td><td> <p><b><%=subreddits[i].data.url%></p></td><td><p><b><%=subreddits[i].data.ups%></p></td><td><form method="POST" action="/reddit">
+<input type="hidden" name ="title"  value="<%=subreddits[i].data.title%>" >
+<input type="hidden" name ="url"  value=" <%=subreddits[i].data.url%>" >
+<button type="submit" class="btn btn-default">Select Page</button>
+</form></td></tr>
+
+<%}%>
+</table>
+
+  <%}%>
+  
+  
+  </body>
+  </html>

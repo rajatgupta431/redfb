@@ -1,0 +1,51 @@
+<head> <meta charset="utf-8">
+<link  rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"/>
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10-dev/css/jquery.dataTables.css">
+
+<script type="text/javascript" language="javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" language="javascript" src="//cdn.datatables.net/1.10-dev/js/jquery.dataTables.js"></script>
+<script>$(document).ready( function () {
+	$('table').DataTable();
+} );
+</script>
+<style>body {
+	font: 100%/1.45em "Helvetica Neue", HelveticaNeue, Verdana, Arial, Helvetica, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #333;
+	background-color: #fff;
+}
+
+
+div.container {
+	min-width: 980px;
+	margin: 0 auto;
+}
+</style>
+</head>
+
+<body>
+<h1><%=stats[0].page_name%></h1>
+<h2>Total Posts : <%=stats.length%></h2>
+
+<legend>Recent posts to this page</legend>
+<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Title</th>  
+            <th>URL</th>  
+           <th>Page Name</th>  
+           <th>Date</th>  
+          </tr>  
+        </thead>  
+	
+		<%for (var i=stats.length-1; i>=0; i--){%>
+         
+<tr><td><p style="color:red"><b><%=stats[i].title%></p></td><td> <p><b><%=stats[i].url%></p></td><td><a href="/stats?name=<%=stats[i].page_name%>"><%=stats[i].page_name%></a></td><td><%=stats[i].date%></td></tr>
+
+<%}%>
+</table>
+		
+
+</body>
+</html>

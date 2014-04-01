@@ -1,0 +1,55 @@
+<head> <meta charset="utf-8">
+<link  rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css"/>
+<link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10-dev/css/jquery.dataTables.css">
+
+<script type="text/javascript" language="javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script type="text/javascript" language="javascript" src="//cdn.datatables.net/1.10-dev/js/jquery.dataTables.js"></script>
+<script>$(document).ready( function () {
+	$('table').DataTable();
+} );
+</script>
+<style>body {
+	font: 100%/1.45em "Helvetica Neue", HelveticaNeue, Verdana, Arial, Helvetica, sans-serif;
+	margin: 0;
+	padding: 0;
+	color: #333;
+	background-color: #fff;
+}
+
+
+div.container {
+	min-width: 980px;
+	margin: 0 auto;
+}
+</style>
+</head>
+<body>
+	<legend>List of your facebook pages</legend>
+	<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Category</th>  
+            <th>Name</th>  
+           <th>Action</th>  
+          </tr>  
+        </thead>  
+<%if(data) {%>
+	
+
+<%for (var i=data.length-1; i>=0; i--){%>
+         
+<tr><td><p style="color:red"><b><%=data[i].category%></p></td><td> <p><b><%=data[i].name%></p></td><td><form method="POST" action="/fb">
+<input type="hidden" name ="access_token"  value="<%=data[i].access_token%>" >
+<input type="hidden" name ="name"  value=" <%=data[i].name%>" >
+
+<button type="submit" class="btn btn-default">POST to Facebook</button>
+</form></td></tr>
+
+<%}%>
+</table>
+
+  <%}%>
+  
+  
+  </body>
+  </html>
