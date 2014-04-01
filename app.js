@@ -12,7 +12,7 @@ var passport = require('passport'),
     util = require('util'),
     FacebookStrategy = require('passport-facebook').Strategy;
 reddit = require('redwrap');
-
+var schedule = require('node-schedule');
 
 var app = express();
 
@@ -21,6 +21,7 @@ var request = require('request');
 
 
 
+var jobs = [];
 
 var FACEBOOK_APP_ID = "286672721491401";
 var FACEBOOK_APP_SECRET = '451dcb3e4676d1833d746ec0f76a76f3';
@@ -40,7 +41,7 @@ passport.deserializeUser(function (obj, done) {
 passport.use(new FacebookStrategy({
         clientID: FACEBOOK_APP_ID,
         clientSecret: FACEBOOK_APP_SECRET,
-        callbackURL: "http://11kx.t.proxylocal.com/auth/facebook/callback"
+        callbackURL: "http://localhost:3000/auth/facebook/callback"
     },
     function (accessToken, refreshToken, profile, done) {
 
@@ -103,27 +104,59 @@ if ('development' == app.get('env')) {
 
 app.get('/', function (req, res) {
     if (req.user != null) {
-        mongo.page.find({
-            id: req.user.id
-        }, function (err, hits) {
-            if (hits) {
-                console.log(hits);
-                res.render('index', {
-                    user: req.user,
-                    hits: hits
-                });
-            } else
-                res.render('index', {
+        request({
+                uri: "https://graph.facebook.com/me/accounts/?access_token=" + req.user.token,
+
+                timeout: 15000,
+                method: "GET"
+            },
+
+            function (err, response, body) {
+                if (!err) {
+                    console.log(body);
+                    body = JSON.parse(body);
+                    //req.session.page_token= body.data[0].access_token;
+
+                    //getting stats 
+                    mongo.page.find({
+                        id: req.user.id
+                    }, function (err, hits) {
+                        if (hits) {
+                            console.log(hits);
+                            res.render('index', {
+                                data: body.data,
+                                user: req.user,
+                                hits: hits
+                            });
+                        } else
+                            res.render('index', {
+                                data: body.data,
+                                user: req.user,
+                                hits: null
+                            });
+
+                    });
+                } else res.render('index', {
+                    data: null,
                     user: req.user,
                     hits: null
                 });
 
-        });
+
+
+
+            });
+
+
     } else res.render('index', {
+        data: null,
         user: req.user,
         hits: null
     });
 
+
+
+    //
 
 });
 
@@ -272,19 +305,246 @@ app.get('/stats', function (req, res) {
     mongo.page.find({
         page_name: req.query.name
     }, function (err, body) {
+        if (!err) {
+            mongo.job.find({
+                page_name: req.query.name
+            }, function (err, job) {
 
-        if (!err) res.render('stats', {
-            stats: body
-        });
+                if (!err) {
+                    res.render('stats', {
+                        stats: body,
+                        jobs: job
+                    });
+
+                } else res.send(err);
+
+            });
+        }
+        //
         else res.send(err);
-
+        //
 
     });
 
 
 });
 
+app.post('/set_subreddit', function (req, res) {
+
+    mongo.job.find({
+        id: req.user.id,
+        subreddit: req.body.subreddit,
+        page_name: req.body.name
+    }, function (err, data) {
+        if (!err) {
+            console.log(data[0]);
+            if (data[0] == null) {
+                var new_entry = new mongo.job({
+                    id: req.user.id,
+                    subreddit: req.body.subreddit,
+                    page_name: req.body.name,
+                    access_token: req.body.access_token,
+                    date: {
+                        type: Date,
+                        default: Date.now
+                    }
+                });
+
+                new_entry.save(function (err) {
+                    if (!err) {
+                        console.log("new job saved");
+                        res.send("Saved");
+                    } else {
+                        console.log(err);
+                        re.send(err);
+                    }
+                }); //
+            } else res.send("This subreddit is already configured ");
+
+        } else res.send(err);
+
+    });
 
 
+
+
+});
+
+var rule = new schedule.RecurrenceRule();
+rule.minute = 53;
+//rule.second=50;
+
+var j = schedule.scheduleJob(rule, function () {
+    var i = 0;
+    mongo.job.find(function (err, job) {
+        if (!err) {
+            console.log(jobs);
+            for (var j = 0; j < job.length; j++) {
+                jobs.push(job[j]);
+            }
+            console.log(jobs.length);
+
+            function final(i) {
+
+                if (i > 0) {
+
+
+                    reddit.r(jobs[i - 1].subreddit).top().exe(function (err, data, res) {
+                        if (err) {
+
+                            console.log(err);
+                            return;
+                        } else if (data.error) {
+                            console.log(data.error);
+                            return;
+                        } else {
+                            console.log(i);
+
+
+                            if (data.data.children[0].data.url.indexOf('imgur.com') != -1) {
+                                console.log("FOUND IMGUR");
+
+
+                                request({
+                                        uri: "https://graph.facebook.com/me/photos/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "&url=" + data.data.children[0].data.url,
+
+                                        timeout: 15000,
+                                        method: "POST"
+                                    },
+
+                                    function (err, response, body) {
+                                        if (!err) {
+                                            console.log(body);
+                                            //
+                                            var new_entry = new mongo.page({
+                                                name: jobs[i - 1].page_name,
+                                                id: jobs[i - 1].id,
+                                                title: data.data.children[0].data.title,
+                                                url: data.data.children[0].data.url,
+                                                page_name: jobs[i - 1].page_name,
+                                                date: {
+                                                    type: Date,
+                                                    default: Date.now
+                                                }
+                                            });
+
+                                            new_entry.save(function (err) {
+                                                if (!err) {
+                                                    console.log("new post to the page");
+                                                } else {
+                                                    console.log(err);
+                                                }
+                                            });
+
+                                            //
+                                            console.log("Avlue of i:" + i);
+
+                                            final(--i);
+
+                                        } else {
+                                            console.log(err);
+                                            final(--i);
+                                        }
+
+                                    });
+
+
+
+
+                            } else {
+                                request({
+                                        uri: "https://graph.facebook.com/me/feed/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "" + data.data.children[0].data.url,
+
+                                        timeout: 15000,
+                                        method: "POST"
+                                    },
+
+                                    function (err, response, body) {
+                                        if (!err) {
+                                            console.log(body);
+                                            //
+                                            var new_entry = new mongo.page({
+                                                name: jobs[i - 1].page_name,
+                                                id: jobs[i - 1].id,
+                                                title: data.data.children[0].data.title,
+                                                url: data.data.children[0].data.url,
+                                                page_name: jobs[i - 1].page_name,
+                                                date: {
+                                                    type: Date,
+                                                    default: Date.now
+                                                }
+                                            });
+
+                                            new_entry.save(function (err) {
+                                                if (!err) {
+                                                    console.log("new post to the page");
+                                                } else {
+                                                    console.log(err);
+                                                }
+                                            });
+
+                                            console.log("Avlue of i:" + i);
+                                            final(--i);
+
+                                        } else {
+                                            console.log(err);
+                                            final(--i);
+                                        }
+
+                                    });
+
+
+
+                            }
+
+
+
+
+                        } //else
+                    });
+
+
+
+
+                } //if
+                else {
+                    console.log("Done posting to facebook ");
+                    return;
+                }
+
+
+            }
+            final(jobs.length);
+
+
+        } else console.log(err);
+
+
+    });
+
+
+});
+app.get('/remove', function (req, res) {
+
+    mongo.job.findOne({
+        page_name: req.query.page_name,
+        subreddit: req.query.subreddit,
+        id: req.query.id
+    }, function (err, data) {
+        if (!err) {
+            console.log(data);
+            data.remove(function (err) {
+                if (!err) res.send("Removed Successfully");
+                else res.send(err);
+
+            });
+
+        } else {
+            res.send(err);
+        }
+    });
+
+
+});
 
 app.listen(process.env.PORT || 3000);

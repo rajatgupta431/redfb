@@ -15,11 +15,22 @@ var pageSchema = new Schema({
 	url: String,
 	date :{type: Date,default : Date.now}
 });
+var jobSchema = new Schema({
+	 id: String,
+       subreddit: String,
+        page_name: String,
+        access_token: String,
+        date: {
+            type: Date,
+            default: Date.now
+        }
+});
 
 module.exports ={
 	
 	user : mongo.model('user',userSchema),
-	page : mongo.model('page',pageSchema)
+	page : mongo.model('page',pageSchema),
+	job : mongo.model('job',jobSchema),
 	
 	
 	}

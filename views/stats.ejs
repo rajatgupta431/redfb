@@ -45,6 +45,22 @@ div.container {
 
 <%}%>
 </table>
+<legend>Subreddits Connected to this page</legend>
+<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Subreddit</th>  
+            <th>Action</th>  
+         
+          </tr>  
+        </thead>  
+	
+		<%for (var i=jobs.length-1; i>=0; i--){%>
+         
+<tr><td><p style="color:red"><b><%=jobs[i].subreddit%></p></td><td><a href="/remove?subreddit=<%=jobs[i].subreddit%>&page_name=<%=jobs[i].page_name%>&id=<%=jobs[i].id%>">REMOVE</a></td></tr>
+
+<%}%>
+</table>
 		
 
 </body>

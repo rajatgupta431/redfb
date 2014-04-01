@@ -47,6 +47,37 @@ div.container {
 	<input type="text" name="subreddit">
 	<button type="submit" >Search</button>
 	</form>
+	
+	
+	<legend>List of your facebook pages</legend>
+	<table class="table table-striped">
+ <thead>  
+          <tr>  
+            <th>Category</th>  
+            <th>Name</th>  
+           <th>Action</th>  
+          </tr>  
+        </thead>  
+<%if(data) {%>
+	
+
+<%for (var i=data.length-1; i>=0; i--){%>
+         
+<tr><td><p style="color:red"><b><%=data[i].category%></p></td><td> <p><b><%=data[i].name%></p></td><td><form method="POST" action="/set_subreddit">
+<input type="hidden" name ="access_token"  value="<%=data[i].access_token%>" >
+<input type="hidden" name ="name"  value=" <%=data[i].name%>" >
+<input type="text" name="subreddit" placeholder="subreddit keyword" >
+<button type="submit" class="btn btn-default">Connect to SubReddit</button>
+</form></td></tr>
+
+<%}%>
+</table>
+
+  <%}%>
+  
+	
+	
+	
 	<% if (hits[0]!=null){%>
 		
 	<legend>Your Stats</legend>
@@ -69,6 +100,8 @@ div.container {
 		
 	<%}%>	
 	<%}%>
+	
+	
 
 </body>
 </html>

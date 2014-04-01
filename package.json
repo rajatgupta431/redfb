@@ -11,8 +11,9 @@
     "passport-facebook":"*",
     "passport":"*",
     "request":"*",
-    "redwrap":"*",
+   "redwrap":"*",
     
-    "mongoose":"*"
+    "mongoose":"*",
+    "node-schedule":"*"
   }
 }
