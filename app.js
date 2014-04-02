@@ -354,9 +354,12 @@ app.post('/set_subreddit', function (req, res) {
                     if (!err) {
                         console.log("new job saved");
                         res.send("Saved");
+                        return;
                     } else {
                         console.log(err);
-                        re.send(err);
+                        res.send(err);
+                        return;
+
                     }
                 }); //
             } else res.send("This subreddit is already configured ");
@@ -370,15 +373,14 @@ app.post('/set_subreddit', function (req, res) {
 
 });
 
-var rule = new schedule.RecurrenceRule();
-rule.minute = 53;
-//rule.second=50;
 
-var j = schedule.scheduleJob(rule, function () {
+function postToFB() {
+
+
     var i = 0;
     mongo.job.find(function (err, job) {
         if (!err) {
-            console.log(jobs);
+            console.log(job);
             for (var j = 0; j < job.length; j++) {
                 jobs.push(job[j]);
             }
@@ -399,103 +401,126 @@ var j = schedule.scheduleJob(rule, function () {
                             return;
                         } else {
                             console.log(i);
+                            mongo.page.find({
+                                title: data.data.children[0].data.title,
+                                url: data.data.children[0].data.url,
+                                page_name: jobs[i - 1].page_name
+                            }, function (err, pages) {
+                                console.log(pages);
+                                if (pages[0] != null) {
+                                    console.log("Already posted the same ");
+                                    return final(--i);
 
 
-                            if (data.data.children[0].data.url.indexOf('imgur.com') != -1) {
-                                console.log("FOUND IMGUR");
+
+                                } else {
+                                    if (data.data.children[0].data.url.indexOf('imgur.com') != -1) {
+                                        console.log("FOUND IMGUR");
 
 
-                                request({
-                                        uri: "https://graph.facebook.com/me/photos/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "&url=" + data.data.children[0].data.url,
+                                        request({
+                                                uri: "https://graph.facebook.com/me/photos/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "&url=" + data.data.children[0].data.url,
 
-                                        timeout: 15000,
-                                        method: "POST"
-                                    },
+                                                timeout: 15000,
+                                                method: "POST"
+                                            },
 
-                                    function (err, response, body) {
-                                        if (!err) {
-                                            console.log(body);
-                                            //
-                                            var new_entry = new mongo.page({
-                                                name: jobs[i - 1].page_name,
-                                                id: jobs[i - 1].id,
-                                                title: data.data.children[0].data.title,
-                                                url: data.data.children[0].data.url,
-                                                page_name: jobs[i - 1].page_name,
-                                                date: {
-                                                    type: Date,
-                                                    default: Date.now
-                                                }
-                                            });
-
-                                            new_entry.save(function (err) {
+                                            function (err, response, body) {
                                                 if (!err) {
-                                                    console.log("new post to the page");
+                                                    console.log(body);
+                                                    //
+                                                    var new_entry = new mongo.page({
+                                                        name: jobs[i - 1].page_name,
+                                                        id: jobs[i - 1].id,
+                                                        title: data.data.children[0].data.title,
+                                                        url: data.data.children[0].data.url,
+                                                        page_name: jobs[i - 1].page_name,
+                                                        date: {
+                                                            type: Date,
+                                                            default: Date.now
+                                                        }
+                                                    });
+
+                                                    new_entry.save(function (err) {
+                                                        if (!err) {
+                                                            console.log("new post to the page");
+                                                            return;
+                                                        } else {
+                                                            console.log(err);
+                                                            return;
+                                                        }
+                                                    });
+
+                                                    //
+                                                    console.log("Avlue of i:" + i);
+
+                                                    return final(--i);
+
                                                 } else {
                                                     console.log(err);
+                                                    return final(--i);
                                                 }
+
                                             });
 
-                                            //
-                                            console.log("Avlue of i:" + i);
-
-                                            final(--i);
-
-                                        } else {
-                                            console.log(err);
-                                            final(--i);
-                                        }
-
-                                    });
 
 
 
+                                    } else {
+                                        request({
+                                                uri: "https://graph.facebook.com/me/feed/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "" + data.data.children[0].data.url,
 
-                            } else {
-                                request({
-                                        uri: "https://graph.facebook.com/me/feed/?access_token=" + jobs[i - 1].access_token + "&message=" + data.data.children[0].data.title + "" + data.data.children[0].data.url,
+                                                timeout: 15000,
+                                                method: "POST"
+                                            },
 
-                                        timeout: 15000,
-                                        method: "POST"
-                                    },
-
-                                    function (err, response, body) {
-                                        if (!err) {
-                                            console.log(body);
-                                            //
-                                            var new_entry = new mongo.page({
-                                                name: jobs[i - 1].page_name,
-                                                id: jobs[i - 1].id,
-                                                title: data.data.children[0].data.title,
-                                                url: data.data.children[0].data.url,
-                                                page_name: jobs[i - 1].page_name,
-                                                date: {
-                                                    type: Date,
-                                                    default: Date.now
-                                                }
-                                            });
-
-                                            new_entry.save(function (err) {
+                                            function (err, response, body) {
                                                 if (!err) {
-                                                    console.log("new post to the page");
+                                                    console.log(body);
+                                                    //
+                                                    var new_entry = new mongo.page({
+                                                        name: jobs[i - 1].page_name,
+                                                        id: jobs[i - 1].id,
+                                                        title: data.data.children[0].data.title,
+                                                        url: data.data.children[0].data.url,
+                                                        page_name: jobs[i - 1].page_name,
+                                                        date: {
+                                                            type: Date,
+                                                            default: Date.now
+                                                        }
+                                                    });
+
+                                                    new_entry.save(function (err) {
+                                                        if (!err) {
+                                                            console.log("new post to the page");
+                                                            return;
+                                                        } else {
+                                                            console.log(err);
+                                                            return;
+                                                        }
+                                                    });
+
+                                                    console.log("Avlue of i:" + i);
+                                                    return final(--i);
+
                                                 } else {
                                                     console.log(err);
+                                                    return final(--i);
                                                 }
+
                                             });
 
-                                            console.log("Avlue of i:" + i);
-                                            final(--i);
-
-                                        } else {
-                                            console.log(err);
-                                            final(--i);
-                                        }
-
-                                    });
 
 
+                                    }
 
-                            }
+
+                                    return;
+
+                                }
+
+
+                            });
 
 
 
@@ -508,21 +533,37 @@ var j = schedule.scheduleJob(rule, function () {
 
                 } //if
                 else {
+                    jobs = [];
                     console.log("Done posting to facebook ");
                     return;
                 }
 
 
             }
-            final(jobs.length);
+            return final(jobs.length);
 
 
         } else console.log(err);
 
 
     });
+    return;
 
-
+}
+var rule = new schedule.RecurrenceRule();
+rule.minute = 4;
+var j = schedule.scheduleJob(rule, function () {
+    postToFB();
+});
+var rule1 = new schedule.RecurrenceRule();
+rule1.minute = 5;
+var k = schedule.scheduleJob(rule1, function () {
+    postToFB();
+});
+var rule2 = new schedule.RecurrenceRule();
+rule2.minute = 6;
+var l = schedule.scheduleJob(rule2, function () {
+    postToFB();
 });
 app.get('/remove', function (req, res) {
 
